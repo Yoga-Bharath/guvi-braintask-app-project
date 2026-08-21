@@ -14,8 +14,13 @@ phases:
 
       - ECR_URI=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/brain-tasks-app
 
+      - IMAGE_TAG=${CODEBUILD_RESOLVED_SOURCE_VERSION}
+
+      - IMAGE_TAG=${IMAGE_TAG:0:7}
+
       - echo "AWS Account = ${AWS_ACCOUNT_ID}"
       - echo "ECR URI = ${ECR_URI}"
+      - echo "Image Tag = ${IMAGE_TAG}"
 
       - echo "Logging in to Amazon ECR..."
 
@@ -29,13 +34,13 @@ phases:
 
       - echo "Building Docker image..."
 
-      - docker build -t brain-tasks-app:latest ./Brain-Tasks-App
+      - docker build -t brain-tasks-app:${IMAGE_TAG} ./Brain-Tasks-App
 
       - echo "Docker image built successfully."
 
       - echo "Tagging Docker image..."
 
-      - docker tag brain-tasks-app:latest ${ECR_URI}:latest
+      - docker tag brain-tasks-app:${IMAGE_TAG} ${ECR_URI}:${IMAGE_TAG}
 
       - echo "Docker image tagged successfully."
 
@@ -47,12 +52,15 @@ phases:
 
       - echo "Pushing Docker image to ECR..."
 
-      - docker push ${ECR_URI}:latest
+      - docker push ${ECR_URI}:${IMAGE_TAG}
 
       - echo "Docker image pushed successfully."
 
-      - echo "ECR image: ${ECR_URI}:latest"
+      - echo "IMAGE_URI=${ECR_URI}:${IMAGE_TAG}"
+
+      - printf '[{"name":"brain-tasks-app","imageUri":"%s"}]' "${ECR_URI}:${IMAGE_TAG}" > image-definition.json
 
 artifacts:
   files:
     - kubernetes-manifests/application.yaml
+    - image-definition.json

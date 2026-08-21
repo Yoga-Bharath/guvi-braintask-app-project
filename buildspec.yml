@@ -61,14 +61,11 @@ phases:
 
       - sed "s|\$IMAGE_URI|${IMAGE_URI}|g" kubernetes-manifests/application.yaml > application-deploy.yaml
 
-      - echo "Generated deployment manifest:"
+      - echo "Generated Kubernetes manifest:"
       - cat application-deploy.yaml
-
-      - printf '[{"name":"brain-tasks-app","imageUri":"%s"}]' "${IMAGE_URI}" > image-definition.json
 
       - echo "Build completed successfully."
 
 artifacts:
   files:
     - application-deploy.yaml
-    - image-definition.json

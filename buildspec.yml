@@ -16,9 +16,12 @@ phases:
 
       - IMAGE_TAG=$(echo ${CODEBUILD_RESOLVED_SOURCE_VERSION} | cut -c 1-7)
 
+      - IMAGE_URI=${ECR_URI}:${IMAGE_TAG}
+
       - echo "AWS Account = ${AWS_ACCOUNT_ID}"
       - echo "ECR URI = ${ECR_URI}"
       - echo "Image Tag = ${IMAGE_TAG}"
+      - echo "Image URI = ${IMAGE_URI}"
 
       - echo "Logging in to Amazon ECR..."
 
@@ -38,7 +41,7 @@ phases:
 
       - echo "Tagging Docker image..."
 
-      - docker tag brain-tasks-app:${IMAGE_TAG} ${ECR_URI}:${IMAGE_TAG}
+      - docker tag brain-tasks-app:${IMAGE_TAG} ${IMAGE_URI}
 
       - echo "Docker image tagged successfully."
 
@@ -50,15 +53,22 @@ phases:
 
       - echo "Pushing Docker image to ECR..."
 
-      - docker push ${ECR_URI}:${IMAGE_TAG}
+      - docker push ${IMAGE_URI}
 
       - echo "Docker image pushed successfully."
 
-      - echo "IMAGE_URI=${ECR_URI}:${IMAGE_TAG}"
+      - echo "Generating Kubernetes deployment manifest..."
 
-      - printf '[{"name":"brain-tasks-app","imageUri":"%s"}]' "${ECR_URI}:${IMAGE_TAG}" > image-definition.json
+      - sed "s|\$IMAGE_URI|${IMAGE_URI}|g" kubernetes-manifests/application.yaml > application-deploy.yaml
+
+      - echo "Generated deployment manifest:"
+      - cat application-deploy.yaml
+
+      - printf '[{"name":"brain-tasks-app","imageUri":"%s"}]' "${IMAGE_URI}" > image-definition.json
+
+      - echo "Build completed successfully."
 
 artifacts:
   files:
-    - kubernetes-manifests/application.yaml
+    - application-deploy.yaml
     - image-definition.json

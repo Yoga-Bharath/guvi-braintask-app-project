@@ -1,0 +1,92 @@
+{
+  "pipeline": {
+    "name": "brain-tasks-pipeline",
+    "roleArn": "arn:aws:iam::822127610519:role/AWSCodePipelineServiceRole-ap-south-1-brain-tasks",
+    "pipelineType": "V2",
+    "artifactStore": {
+      "type": "S3",
+      "location": "brain-tasks-codepipeline-822127610519"
+    },
+    "stages": [
+      {
+        "name": "Source",
+        "actions": [
+          {
+            "name": "GitHubSource",
+            "actionTypeId": {
+              "category": "Source",
+              "owner": "AWS",
+              "provider": "CodeStarSourceConnection",
+              "version": "1"
+            },
+            "runOrder": 1,
+            "configuration": {
+              "ConnectionArn": "arn:aws:codeconnections:ap-south-1:822127610519:connection/0ff08849-3ab1-404e-a747-ac4b227c572b",
+              "FullRepositoryId": "Yoga-Bharath/guvi-braintask-app-project",
+              "BranchName": "main",
+              "OutputArtifactFormat": "CODE_ZIP"
+            },
+            "outputArtifacts": [
+              {
+                "name": "SourceOutput"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Build",
+        "actions": [
+          {
+            "name": "CodeBuild",
+            "actionTypeId": {
+              "category": "Build",
+              "owner": "AWS",
+              "provider": "CodeBuild",
+              "version": "1"
+            },
+            "runOrder": 1,
+            "configuration": {
+              "ProjectName": "brain-tasks-build"
+            },
+            "inputArtifacts": [
+              {
+                "name": "SourceOutput"
+              }
+            ],
+            "outputArtifacts": [
+              {
+                "name": "BuildOutput"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Deploy",
+        "actions": [
+          {
+            "name": "DeployToEKS",
+            "actionTypeId": {
+              "category": "Deploy",
+              "owner": "AWS",
+              "provider": "EKS",
+              "version": "1"
+            },
+            "runOrder": 1,
+            "configuration": {
+              "ClusterName": "brain-tasks-cluster",
+              "ManifestFiles": "application-deploy.yaml"
+            },
+            "inputArtifacts": [
+              {
+                "name": "BuildOutput"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "version": 1
+  }
+}
